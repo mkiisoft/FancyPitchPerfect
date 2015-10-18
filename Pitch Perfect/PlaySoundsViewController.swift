@@ -17,15 +17,18 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
 
     @IBOutlet weak var slowButton: UIButton!
     @IBOutlet weak var fastButton: UIButton!
-    @IBOutlet weak var chipmuchButton: UIButton!
+    @IBOutlet weak var chipmunkButton: UIButton!
     @IBOutlet weak var vaderButton: UIButton!
-    @IBOutlet weak var selectOption: UILabel!
+    @IBOutlet weak var echoButton: UIButton!
+    @IBOutlet weak var chipmunkTop: NSLayoutConstraint!
     
+    @IBOutlet weak var vaderTop: NSLayoutConstraint!
     var audioPlayer = AVAudioPlayer()
     var receivedAudio:RecordedAudio!
     
     var audioEngine:AVAudioEngine!
     var audioFile:AVAudioFile!
+    var reverbPlayers:[AVAudioPlayer] = []
     
     weak var delegate : PlayerDelegate?
     
@@ -33,11 +36,25 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
     var isFastPressed = false
     var isChipPressed = false
     var isVadePressed = false
+    var isEchoPressed = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        /*!
+        *
+        * @brief Setting white title button
+        *
+        */
+        
 
         navigationController!.navigationBar.tintColor = UIColor.whiteColor()
+        
+        /*!
+        *
+        * @brief Setting gradient background for the entire view/screen
+        *
+        */
         
         let background = CAGradientLayer().turquoiseColor()
         background.frame = self.view.bounds
@@ -49,18 +66,138 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
             
         }
         
+        /*!
+        *
+        * @brief Setting the initial state for the fadeIn + Scale animation
+        * Buttons will appear with a subtle animation.
+        *
+        */
+        
+        slowButton.transform = CGAffineTransformMakeScale(0.1, 0.1)
+        slowButton.alpha = 0
+        
+        fastButton.transform = CGAffineTransformMakeScale(0.1, 0.1)
+        fastButton.alpha = 0
+        
+        chipmunkButton.transform = CGAffineTransformMakeScale(0.1, 0.1)
+        chipmunkButton.alpha = 0
+        
+        vaderButton.transform = CGAffineTransformMakeScale(0.1, 0.1)
+        vaderButton.alpha = 0
+        
+        echoButton.transform = CGAffineTransformMakeScale(0.1, 0.1)
+        echoButton.alpha = 0
+        
+        /*!
+        *
+        * @brief Setting offset to buttons depending on screen device height
+        *
+        * 568.0 for iPhone 4s or less
+        * 667.0 for iPhone 6
+        * 736.0 for iPhone 6 Plus
+        * else  for iPhone 5/5s
+        *
+        */
+        
+        if UIScreen.mainScreen().bounds.size.height < 568.0 {
+            chipmunkTop.constant = -4
+            vaderTop.constant = -4
+        } else if UIScreen.mainScreen().bounds.size.height == 667.0 {
+            chipmunkTop.constant = +80
+            vaderTop.constant = +80
+        } else if UIScreen.mainScreen().bounds.size.height == 736.0 {
+            chipmunkTop.constant = +110
+            vaderTop.constant = +110
+        } else {
+            
+        }
+        
+        /*!
+        *
+        * @brief Setting AudioPlayer, AudioEngine and Echo Style
+        *
+        */
+        
         audioPlayer.enableRate = true
         
         audioEngine = AVAudioEngine()
        
         audioFile = try! AVAudioFile(forReading: receivedAudio.filePathUrl)
         
-        selectOption.alpha = 0
+        for i in 0...10 {
+            do{
+            let temp = try AVAudioPlayer(contentsOfURL: receivedAudio.filePathUrl,
+                fileTypeHint: nil)
+                reverbPlayers.append(temp)
+            } catch {
+                
+            }
+        }
         
-        UIView.animateWithDuration(1.2, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 1.0, options: .CurveEaseIn, animations: {
+        /*!
+        *
+        * @brief Setting fadeIn + Scale for a subtle animation
+        * Image resize for iPhone 4s or less
+        *
+        */
+        
+        UIView.animateWithDuration(0.8, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 1.0, options: .CurveEaseIn, animations: {
             
-            self.selectOption.center.y = self.selectOption.frame.origin.y - 40
-            self.selectOption.alpha = 1
+            self.slowButton.alpha = 1
+            
+            if UIScreen.mainScreen().bounds.size.height < 568.0 {
+                self.slowButton.transform = CGAffineTransformMakeScale(0.8, 0.8)
+            } else {
+                self.slowButton.transform = CGAffineTransformMakeScale(1, 1)
+            }
+            
+            }, completion: nil)
+        
+        UIView.animateWithDuration(0.8, delay: 0.1, usingSpringWithDamping: 1.0, initialSpringVelocity: 1.0, options: .CurveEaseIn, animations: {
+            
+            self.fastButton.alpha = 1
+            
+            if UIScreen.mainScreen().bounds.size.height < 568.0 {
+                self.fastButton.transform = CGAffineTransformMakeScale(0.8, 0.8)
+            } else {
+                self.fastButton.transform = CGAffineTransformMakeScale(1, 1)
+            }
+            
+            }, completion: nil)
+        
+        UIView.animateWithDuration(0.8, delay: 0.2, usingSpringWithDamping: 1.0, initialSpringVelocity: 1.0, options: .CurveEaseIn, animations: {
+            
+            self.chipmunkButton.alpha = 1
+            
+            if UIScreen.mainScreen().bounds.size.height < 568.0 {
+                self.chipmunkButton.transform = CGAffineTransformMakeScale(0.8, 0.8)
+            } else {
+                self.chipmunkButton.transform = CGAffineTransformMakeScale(1, 1)
+            }
+            
+            }, completion: nil)
+        
+        UIView.animateWithDuration(0.8, delay: 0.3, usingSpringWithDamping: 1.0, initialSpringVelocity: 1.0, options: .CurveEaseIn, animations: {
+            
+            self.vaderButton.alpha = 1
+            
+            if UIScreen.mainScreen().bounds.size.height < 568.0 {
+                self.vaderButton.transform = CGAffineTransformMakeScale(0.8, 0.8)
+            } else {
+                self.vaderButton.transform = CGAffineTransformMakeScale(1, 1)
+            }
+            
+            }, completion: nil)
+        
+        UIView.animateWithDuration(0.8, delay: 0.4, usingSpringWithDamping: 1.0, initialSpringVelocity: 1.0, options: .CurveEaseIn, animations: {
+            
+            self.echoButton.alpha = 1
+            
+            if UIScreen.mainScreen().bounds.size.height < 568.0 {
+                self.echoButton.transform = CGAffineTransformMakeScale(0.8, 0.8)
+            } else {
+                self.echoButton.transform = CGAffineTransformMakeScale(1, 1)
+            }
             
             }, completion: nil)
         
@@ -125,7 +262,7 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
         
         if isChipPressed == false {
             
-            chipmuchButton.setImage(UIImage(named: "stop audio"), forState: UIControlState.Normal)
+            chipmunkButton.setImage(UIImage(named: "stop audio"), forState: UIControlState.Normal)
             
             isChipPressed = true
             
@@ -133,7 +270,7 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
             
         } else {
             
-            chipmuchButton.setImage(UIImage(named: "chipmunk"), forState: UIControlState.Normal)
+            chipmunkButton.setImage(UIImage(named: "chipmunk"), forState: UIControlState.Normal)
             
             audioEngine.stop()
             audioEngine.reset()
@@ -163,6 +300,37 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
         
     }
     
+    @IBAction func playEcho(sender: UIButton) {
+        
+        if isEchoPressed == false {
+            
+            echoButton.setImage(UIImage(named: "stop audio"), forState: UIControlState.Normal)
+            
+            let delay:NSTimeInterval = 0.02
+            for i in 0...10 {
+                let curDelay:NSTimeInterval = delay*NSTimeInterval(i)
+                let player:AVAudioPlayer = reverbPlayers[i]
+                player.delegate = nil
+                let exponent:Double = -Double(i)/Double(10/2)
+                let volume = Float(pow(Double(M_E), exponent))
+                player.volume = volume
+                player.delegate = self
+                player.playAtTime(player.deviceCurrentTime + curDelay)
+            }
+            
+            isEchoPressed = true
+            
+        } else {
+            
+            echoButton.setImage(UIImage(named: "echo"), forState: UIControlState.Normal)
+            
+            audioPlayer.stop()
+            isEchoPressed = false
+        }
+        
+    }
+    
+    
     func playAudioWithVariablePitch(pitch: Float){
         
         audioPlayer.stop()
@@ -179,18 +347,29 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
         audioEngine.connect(audioPlayerNode, to: changePitchEffect, format: nil)
         audioEngine.connect(changePitchEffect, to: audioEngine.outputNode, format: nil)
         
+        /*!
+        *
+        * @brief completionHandler to comeback the button to original state
+        *
+        */
+        
         audioPlayerNode.scheduleFile(audioFile, atTime: nil, completionHandler: {
             
-            if self.isVadePressed == true {
-                self.audioEngine.stop()
-                self.vaderButton.setImage(UIImage(named: "vader"), forState: UIControlState.Normal)
-                self.isVadePressed = false
-            }
-            
-            if self.isChipPressed == true {
-                self.audioEngine.stop()
-                self.chipmuchButton.setImage(UIImage(named: "chipmunk"), forState: UIControlState.Normal)
-                self.isChipPressed = false
+            let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(1 * Double(NSEC_PER_SEC)))
+            dispatch_after(delayTime, dispatch_get_main_queue()) {
+                
+                if self.isVadePressed == true {
+                    self.audioEngine.stop()
+                    self.vaderButton.setImage(UIImage(named: "vader"), forState: UIControlState.Normal)
+                    self.isVadePressed = false
+                }
+                
+                if self.isChipPressed == true {
+                    self.audioEngine.stop()
+                    self.chipmunkButton.setImage(UIImage(named: "chipmunk"), forState: UIControlState.Normal)
+                    self.isChipPressed = false
+                }
+                
             }
             
         })
@@ -199,6 +378,12 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
         
         audioPlayerNode.play()
     }
+    
+    /*!
+    *
+    * @brief delegate to comeback the button to original state
+    *
+    */
     
     
     func audioPlayerDidFinishPlaying(player: AVAudioPlayer, successfully flag: Bool) {
@@ -216,6 +401,13 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
             
             audioPlayer.stop()
             isSlowPressed = false
+        }
+        
+        if isEchoPressed == true {
+            echoButton.setImage(UIImage(named: "echo"), forState: UIControlState.Normal)
+            
+            audioPlayer.stop()
+            isEchoPressed = false
         }
     }
     

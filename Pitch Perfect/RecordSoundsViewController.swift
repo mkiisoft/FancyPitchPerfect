@@ -26,6 +26,12 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
     var secondScreen: String = "secondScreen"
     var segueShouldOccur = false
     
+    /*!
+    *
+    * @brief Setting counter with the update value and format
+    *
+    */
+    
     func CountTimer(){
         timerCount += 0.1
         let recordTimeFormat: String = NSString(format: "%05.2f", timerCount) as String
@@ -34,6 +40,12 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        /*!
+        *
+        * @brief Transparent NavigationBar with white title color
+        *
+        */
         
         navigationController!.navigationBar.setBackgroundImage(UIImage(), forBarMetrics: UIBarMetrics.Default)
         navigationController!.navigationBar.shadowImage = UIImage()
@@ -48,20 +60,34 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
         recordTime.alpha = 0
     }
     
+    /*!
+    *
+    * @brief Return animation values to previous/original state
+    *
+    */
+    
     override func viewWillDisappear(animated: Bool) {
         recordImage.alpha = 1
         recordingInProgress.alpha = 0
         recordTime.alpha = 0
-    }
-    
-    override func viewDidDisappear(animated: Bool) {
-        
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
        
     }
+    
+    /*!
+    *
+    * @brief Record audio function:
+    *
+    * - Record audio
+    * - Starts the counter
+    * - Starts all animations
+    * - Change the image button
+    * - When finish, return to previous state
+    *
+    */
 
     @IBAction func recordAudio(sender: UIButton) {
         
@@ -125,6 +151,12 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
         }
         
     }
+    
+    /*!
+    *
+    * @brief Waiting for OS to finish recording and segue to second screen
+    *
+    */
     
     func audioRecorderDidFinishRecording(recorder: AVAudioRecorder, successfully flag: Bool) {
         
