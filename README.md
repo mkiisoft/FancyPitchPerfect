@@ -1,4 +1,4 @@
-# FancyPitchPerfect
+# Fancy Pitch Perfect
 
 This is the first project of the iOS Nanodegree from UDACITY. 100% Develop using Swift 2.0 and latest version of XCode v7.0.1
 
