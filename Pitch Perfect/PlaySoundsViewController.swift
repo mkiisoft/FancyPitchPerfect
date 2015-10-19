@@ -104,6 +104,10 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
         
     }
     
+    override func viewWillDisappear(animated: Bool) {
+        switchButtonState()
+    }
+    
     @IBAction func playSlow(sender: UIButton) {
         
         if isSlowPressed == false {
