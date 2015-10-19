@@ -150,9 +150,9 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
             
             chipmunkButton.setImage(UIImage(named: "stop audio"), forState: UIControlState.Normal)
             
-            isChipPressed = true
-            
             playAudioWithVariablePitch(1000)
+            
+            isChipPressed = true
             
         } else {
             
@@ -170,9 +170,9 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
             
             vaderButton.setImage(UIImage(named: "stop audio"), forState: UIControlState.Normal)
             
-            isVadePressed = true
-            
             playAudioWithVariablePitch(-1000)
+            
+            isVadePressed = true
             
         } else {
             
@@ -260,17 +260,7 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
             let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(1 * Double(NSEC_PER_SEC)))
             dispatch_after(delayTime, dispatch_get_main_queue()) {
                 
-                if self.isVadePressed == true {
-                    self.stop()
-                    self.vaderButton.setImage(UIImage(named: "vader"), forState: UIControlState.Normal)
-                    self.isVadePressed = false
-                }
-                
-                if self.isChipPressed == true {
-                    self.stop()
-                    self.chipmunkButton.setImage(UIImage(named: "chipmunk"), forState: UIControlState.Normal)
-                    self.isChipPressed = false
-                }
+                self.switchButtonState()
                 
             }
             
@@ -290,6 +280,35 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
     
     func audioPlayerDidFinishPlaying(player: AVAudioPlayer, successfully flag: Bool) {
         self.delegate?.soundFinished(self)
+        
+        switchButtonState()
+        
+    }
+    
+    func stop() {
+        
+        if audioEngine.running {
+            audioEngine.reset()
+            audioEngine.stop()
+            switchButtonState()
+        } else if audioPlayer.playing {
+            audioPlayer.stop()
+            switchButtonState()
+        } else if audioPlayerEcho.playing && audioPlayerEcho != nil {
+            for i in 0...N{
+                audioPlayerEcho = reverbPlayers[i]
+                audioPlayerEcho.currentTime = 0.0
+                audioPlayerEcho.stop()
+                switchButtonState()
+            }
+        }
+    }
+    
+    deinit {
+        audioPlayer.delegate = nil
+    }
+    
+    func switchButtonState() {
         
         if isFastPressed == true {
             fastButton.setImage(UIImage(named: "fast"), forState: UIControlState.Normal)
@@ -311,26 +330,21 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
             stop()
             isEchoPressed = false
         }
-    }
-    
-    func stop() {
         
-        if audioEngine.running {
-            audioEngine.reset()
-            audioEngine.stop()
-        } else if audioPlayer.playing {
-            audioPlayer.stop()
-        } else if audioPlayerEcho.playing && audioPlayerEcho != nil {
-            for i in 0...N{
-                audioPlayerEcho = reverbPlayers[i]
-                audioPlayerEcho.currentTime = 0.0
-                audioPlayerEcho.stop()
-            }
+        if isVadePressed == true {
+            vaderButton.setImage(UIImage(named: "vader"), forState: UIControlState.Normal)
+            
+            stop()
+            isVadePressed = false
         }
-    }
-    
-    deinit {
-        audioPlayer.delegate = nil
+        
+        if isChipPressed == true {
+            chipmunkButton.setImage(UIImage(named: "chipmunk"), forState: UIControlState.Normal)
+            
+            stop()
+            isChipPressed = false
+        }
+        
     }
     
     /*!

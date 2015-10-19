@@ -18,7 +18,9 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
     @IBOutlet weak var pauseImage: UIButton!
     
     var audioRecorder:AVAudioRecorder!
-    var recordedAudio = RecordedAudio()
+    var recordedAudio:RecordedAudio!
+    
+    var fileName = "fancy_url"
     
     var recordState = false
     var isRecorderPaused = false
@@ -152,6 +154,15 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
                 recordState = true
             }
             
+            let dirPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
+            
+            let pathArray = [dirPath, fileName]
+            let filePath = NSURL.fileURLWithPathComponents(pathArray)
+            let finalPath = filePath!
+            
+            
+            let recordedAudio = RecordedAudio(var1: finalPath, var2: fileName)
+            
             let session = AVAudioSession.sharedInstance()
             try! session.setCategory(AVAudioSessionCategoryPlayAndRecord)
             
@@ -211,6 +222,9 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
     func audioRecorderDidFinishRecording(recorder: AVAudioRecorder, successfully flag: Bool) {
         
         if flag {
+            
+            let recordedAudio = RecordedAudio(var1: recorder.url, var2: recorder.description)
+            
             performSegueWithIdentifier("secondScreen", sender: recordedAudio)
         }
         
