@@ -65,4 +65,4 @@ extension CAGradientLayer {
 ```
 ## Running App:
 
-[![Fancy Pitch Perfect](https://i.ytimg.com/vi/p8L6OjUWoO8/maxresdefault.jpg)](https://www.youtube.com/watch?v=p8L6OjUWoO8 "Fancy Pitch Perfect")
+[![Fancy Pitch Perfect](https://i.ytimg.com/vi/p8L6OjUWoO8/maxresdefault.jpg)](https://www.youtube.com/watch?v=jfyIGGk2yBI "Fancy Pitch Perfect")
