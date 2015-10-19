@@ -24,6 +24,7 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
     
     @IBOutlet weak var vaderTop: NSLayoutConstraint!
     var audioPlayer = AVAudioPlayer()
+    var audioPlayerEcho:AVAudioPlayer!
     var receivedAudio:RecordedAudio!
     
     var audioEngine:AVAudioEngine!
@@ -37,6 +38,8 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
     var isChipPressed = false
     var isVadePressed = false
     var isEchoPressed = false
+    
+    let N:Int = 5
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -66,12 +69,278 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
             
         }
         
+        initViewValues()
+        
+        initViewAnimation()
+        
+        screenOffsets()
+        
         /*!
         *
-        * @brief Setting the initial state for the fadeIn + Scale animation
-        * Buttons will appear with a subtle animation.
+        * @brief Setting AudioPlayer, AudioEngine and Echo Style
         *
         */
+        
+        audioPlayer.enableRate = true
+        
+        audioEngine = AVAudioEngine()
+       
+        audioFile = try! AVAudioFile(forReading: receivedAudio.filePathUrl)
+        
+        for i in 0...N {
+            do{
+            audioPlayerEcho = try AVAudioPlayer(contentsOfURL: receivedAudio.filePathUrl,
+                fileTypeHint: nil)
+                reverbPlayers.append(audioPlayerEcho)
+            } catch {
+                
+            }
+        }
+        
+    }
+
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        
+    }
+    
+    @IBAction func playSlow(sender: UIButton) {
+        
+        if isSlowPressed == false {
+            
+            slowButton.setImage(UIImage(named: "stop audio"), forState: UIControlState.Normal)
+            
+            playWithRate(0.5)
+            
+            isSlowPressed = true
+            
+        } else {
+            
+            slowButton.setImage(UIImage(named: "slow"), forState: UIControlState.Normal)
+            
+            stop()
+            isSlowPressed = false
+        }
+        
+    }
+    
+    @IBAction func playFast(sender: UIButton) {
+        
+        if isFastPressed == false {
+            
+            fastButton.setImage(UIImage(named: "stop audio"), forState: UIControlState.Normal)
+            
+            playWithRate(2.0)
+            
+            isFastPressed = true
+            
+        } else {
+            
+            fastButton.setImage(UIImage(named: "fast"), forState: UIControlState.Normal)
+            
+            stop()
+            isFastPressed = false
+        }
+        
+    }
+    
+    @IBAction func playChipmunk(sender: UIButton) {
+        
+        if isChipPressed == false {
+            
+            chipmunkButton.setImage(UIImage(named: "stop audio"), forState: UIControlState.Normal)
+            
+            isChipPressed = true
+            
+            playAudioWithVariablePitch(1000)
+            
+        } else {
+            
+            chipmunkButton.setImage(UIImage(named: "chipmunk"), forState: UIControlState.Normal)
+            
+            stop()
+            isChipPressed = false
+        }
+        
+    }
+    
+    @IBAction func playVader(sender: UIButton) {
+        
+        if isVadePressed == false {
+            
+            vaderButton.setImage(UIImage(named: "stop audio"), forState: UIControlState.Normal)
+            
+            isVadePressed = true
+            
+            playAudioWithVariablePitch(-1000)
+            
+        } else {
+            
+            vaderButton.setImage(UIImage(named: "vader"), forState: UIControlState.Normal)
+            stop()
+            isVadePressed = false
+        }
+        
+    }
+    
+    @IBAction func playEcho(sender: UIButton) {
+        
+        if isEchoPressed == false {
+            
+            echoButton.setImage(UIImage(named: "stop audio"), forState: UIControlState.Normal)
+            
+            playWithEcho()
+            
+            isEchoPressed = true
+            
+        } else {
+            
+            stop()
+            
+            isEchoPressed = false
+            echoButton.setImage(UIImage(named: "echo"), forState: UIControlState.Normal)
+
+        }
+        
+    }
+    
+    func playWithEcho() {
+        
+        let delay:NSTimeInterval = 0.02
+    
+        for i in 0...N {
+            let curDelay:NSTimeInterval = delay*NSTimeInterval(i)
+            audioPlayerEcho = reverbPlayers[i]
+            audioPlayerEcho.delegate = nil
+            stop()
+            let exponent:Double = -Double(i)/Double(N/2)
+            let volume = Float(pow(Double(M_E), exponent))
+            audioPlayerEcho.volume = volume
+            audioPlayerEcho.delegate = self
+            
+            audioPlayerEcho.playAtTime(audioPlayerEcho.deviceCurrentTime + curDelay)
+        }
+        
+    }
+    
+    func playWithRate(rate: Float) {
+        
+        stop()
+        
+        audioPlayer.delegate = nil
+        audioPlayer.rate = rate
+        audioPlayer.currentTime = 0.0
+        audioPlayer.delegate = self
+        audioPlayer.play()
+        
+    }
+    
+    func playAudioWithVariablePitch(pitch: Float){
+        
+        stop()
+        
+        let audioPlayerNode = AVAudioPlayerNode()
+        audioEngine.attachNode(audioPlayerNode)
+        
+        let changePitchEffect = AVAudioUnitTimePitch()
+        changePitchEffect.pitch = pitch
+        audioEngine.attachNode(changePitchEffect)
+        
+        audioEngine.connect(audioPlayerNode, to: changePitchEffect, format: nil)
+        audioEngine.connect(changePitchEffect, to: audioEngine.outputNode, format: nil)
+        
+        /*!
+        *
+        * @brief completionHandler to comeback the button to original state
+        *
+        */
+        
+        audioPlayerNode.scheduleFile(audioFile, atTime: nil, completionHandler: {
+            
+            let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(1 * Double(NSEC_PER_SEC)))
+            dispatch_after(delayTime, dispatch_get_main_queue()) {
+                
+                if self.isVadePressed == true {
+                    self.stop()
+                    self.vaderButton.setImage(UIImage(named: "vader"), forState: UIControlState.Normal)
+                    self.isVadePressed = false
+                }
+                
+                if self.isChipPressed == true {
+                    self.stop()
+                    self.chipmunkButton.setImage(UIImage(named: "chipmunk"), forState: UIControlState.Normal)
+                    self.isChipPressed = false
+                }
+                
+            }
+            
+        })
+        
+        try! audioEngine.start()
+        
+        audioPlayerNode.play()
+    }
+    
+    /*!
+    *
+    * @brief delegate to comeback the button to original state
+    *
+    */
+    
+    
+    func audioPlayerDidFinishPlaying(player: AVAudioPlayer, successfully flag: Bool) {
+        self.delegate?.soundFinished(self)
+        
+        if isFastPressed == true {
+            fastButton.setImage(UIImage(named: "fast"), forState: UIControlState.Normal)
+            
+            stop()
+            isFastPressed = false
+        }
+        
+        if isSlowPressed == true {
+            slowButton.setImage(UIImage(named: "slow"), forState: UIControlState.Normal)
+            
+            stop()
+            isSlowPressed = false
+        }
+        
+        if isEchoPressed == true {
+            echoButton.setImage(UIImage(named: "echo"), forState: UIControlState.Normal)
+            
+            stop()
+            isEchoPressed = false
+        }
+    }
+    
+    func stop() {
+        
+        if audioEngine.running {
+            audioEngine.reset()
+            audioEngine.stop()
+        } else if audioPlayer.playing {
+            audioPlayer.stop()
+        } else if audioPlayerEcho.playing && audioPlayerEcho != nil {
+            for i in 0...N{
+                audioPlayerEcho = reverbPlayers[i]
+                audioPlayerEcho.currentTime = 0.0
+                audioPlayerEcho.stop()
+            }
+        }
+    }
+    
+    deinit {
+        audioPlayer.delegate = nil
+    }
+    
+    /*!
+    *
+    * @brief Setting the initial state for the fadeIn + Scale animation
+    * Buttons will appear with a subtle animation.
+    *
+    */
+    
+    func initViewValues() {
         
         slowButton.transform = CGAffineTransformMakeScale(0.1, 0.1)
         slowButton.alpha = 0
@@ -87,60 +356,16 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
         
         echoButton.transform = CGAffineTransformMakeScale(0.1, 0.1)
         echoButton.alpha = 0
-        
-        /*!
-        *
-        * @brief Setting offset to buttons depending on screen device height
-        *
-        * 568.0 for iPhone 4s or less
-        * 667.0 for iPhone 6
-        * 736.0 for iPhone 6 Plus
-        * else  for iPhone 5/5s
-        *
-        */
-        
-        if UIScreen.mainScreen().bounds.size.height < 568.0 {
-            chipmunkTop.constant = -4
-            vaderTop.constant = -4
-        } else if UIScreen.mainScreen().bounds.size.height == 667.0 {
-            chipmunkTop.constant = +80
-            vaderTop.constant = +80
-        } else if UIScreen.mainScreen().bounds.size.height == 736.0 {
-            chipmunkTop.constant = +110
-            vaderTop.constant = +110
-        } else {
-            
-        }
-        
-        /*!
-        *
-        * @brief Setting AudioPlayer, AudioEngine and Echo Style
-        *
-        */
-        
-        audioPlayer.enableRate = true
-        
-        audioEngine = AVAudioEngine()
-       
-        audioFile = try! AVAudioFile(forReading: receivedAudio.filePathUrl)
-        
-        for i in 0...10 {
-            do{
-            let temp = try AVAudioPlayer(contentsOfURL: receivedAudio.filePathUrl,
-                fileTypeHint: nil)
-                reverbPlayers.append(temp)
-            } catch {
-                
-            }
-        }
-        
-        /*!
-        *
-        * @brief Setting fadeIn + Scale for a subtle animation
-        * Image resize for iPhone 4s or less
-        *
-        */
-        
+    }
+    
+    /*!
+    *
+    * @brief Setting fadeIn + Scale for a subtle animation
+    * Image resize for iPhone 4s or less
+    *
+    */
+    
+    func initViewAnimation() {
         UIView.animateWithDuration(0.8, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 1.0, options: .CurveEaseIn, animations: {
             
             self.slowButton.alpha = 1
@@ -200,222 +425,32 @@ class PlaySoundsViewController: UIViewController, AVAudioPlayerDelegate {
             }
             
             }, completion: nil)
-        
-    }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        
-    }
-    
-    @IBAction func playSlow(sender: UIButton) {
-        
-        if isSlowPressed == false {
-            
-            slowButton.setImage(UIImage(named: "stop audio"), forState: UIControlState.Normal)
-            
-            audioPlayer.delegate = nil
-            audioPlayer.stop()
-            audioPlayer.rate = 0.5
-            audioPlayer.currentTime = 0.0
-            audioPlayer.delegate = self
-            audioPlayer.play()
-            
-            isSlowPressed = true
-            
-        } else {
-            
-            slowButton.setImage(UIImage(named: "slow"), forState: UIControlState.Normal)
-            
-            audioPlayer.stop()
-            isSlowPressed = false
-        }
-        
-    }
-    
-    @IBAction func playFast(sender: UIButton) {
-        
-        if isFastPressed == false {
-            
-            fastButton.setImage(UIImage(named: "stop audio"), forState: UIControlState.Normal)
-            
-            audioPlayer.delegate = nil
-            audioPlayer.stop()
-            audioPlayer.rate = 2.0
-            audioPlayer.currentTime = 0.0
-            audioPlayer.delegate = self
-            audioPlayer.play()
-            
-            isFastPressed = true
-            
-        } else {
-            
-            fastButton.setImage(UIImage(named: "fast"), forState: UIControlState.Normal)
-            
-            audioPlayer.stop()
-            isFastPressed = false
-        }
-        
-    }
-    
-    @IBAction func playChipmunk(sender: UIButton) {
-        
-        if isChipPressed == false {
-            
-            chipmunkButton.setImage(UIImage(named: "stop audio"), forState: UIControlState.Normal)
-            
-            isChipPressed = true
-            
-            playAudioWithVariablePitch(1000)
-            
-        } else {
-            
-            chipmunkButton.setImage(UIImage(named: "chipmunk"), forState: UIControlState.Normal)
-            
-            audioEngine.stop()
-            audioEngine.reset()
-            isChipPressed = false
-        }
-        
-    }
-    
-    @IBAction func playVader(sender: UIButton) {
-        
-        if isVadePressed == false {
-            
-            vaderButton.setImage(UIImage(named: "stop audio"), forState: UIControlState.Normal)
-            
-            isVadePressed = true
-            
-            playAudioWithVariablePitch(-1000)
-            
-        } else {
-            
-            vaderButton.setImage(UIImage(named: "vader"), forState: UIControlState.Normal)
-            
-            audioEngine.stop()
-            audioEngine.reset()
-            isVadePressed = false
-        }
-        
-    }
-    
-    @IBAction func playEcho(sender: UIButton) {
-        
-        if isEchoPressed == false {
-            
-            echoButton.setImage(UIImage(named: "stop audio"), forState: UIControlState.Normal)
-            
-            let delay:NSTimeInterval = 0.02
-            for i in 0...10 {
-                let curDelay:NSTimeInterval = delay*NSTimeInterval(i)
-                let player:AVAudioPlayer = reverbPlayers[i]
-                player.delegate = nil
-                let exponent:Double = -Double(i)/Double(10/2)
-                let volume = Float(pow(Double(M_E), exponent))
-                player.volume = volume
-                player.delegate = self
-                player.playAtTime(player.deviceCurrentTime + curDelay)
-            }
-            
-            isEchoPressed = true
-            
-        } else {
-            
-            echoButton.setImage(UIImage(named: "echo"), forState: UIControlState.Normal)
-            
-            audioPlayer.stop()
-            isEchoPressed = false
-        }
-        
-    }
-    
-    
-    func playAudioWithVariablePitch(pitch: Float){
-        
-        audioPlayer.stop()
-        audioEngine.stop()
-        audioEngine.reset()
-        
-        let audioPlayerNode = AVAudioPlayerNode()
-        audioEngine.attachNode(audioPlayerNode)
-        
-        let changePitchEffect = AVAudioUnitTimePitch()
-        changePitchEffect.pitch = pitch
-        audioEngine.attachNode(changePitchEffect)
-        
-        audioEngine.connect(audioPlayerNode, to: changePitchEffect, format: nil)
-        audioEngine.connect(changePitchEffect, to: audioEngine.outputNode, format: nil)
-        
-        /*!
-        *
-        * @brief completionHandler to comeback the button to original state
-        *
-        */
-        
-        audioPlayerNode.scheduleFile(audioFile, atTime: nil, completionHandler: {
-            
-            let delayTime = dispatch_time(DISPATCH_TIME_NOW, Int64(1 * Double(NSEC_PER_SEC)))
-            dispatch_after(delayTime, dispatch_get_main_queue()) {
-                
-                if self.isVadePressed == true {
-                    self.audioEngine.stop()
-                    self.vaderButton.setImage(UIImage(named: "vader"), forState: UIControlState.Normal)
-                    self.isVadePressed = false
-                }
-                
-                if self.isChipPressed == true {
-                    self.audioEngine.stop()
-                    self.chipmunkButton.setImage(UIImage(named: "chipmunk"), forState: UIControlState.Normal)
-                    self.isChipPressed = false
-                }
-                
-            }
-            
-        })
-        
-        try! audioEngine.start()
-        
-        audioPlayerNode.play()
     }
     
     /*!
     *
-    * @brief delegate to comeback the button to original state
+    * @brief Setting offset to buttons depending on screen device height
+    *
+    * 568.0 for iPhone 4s or less
+    * 667.0 for iPhone 6
+    * 736.0 for iPhone 6 Plus
+    * else  for iPhone 5/5s
     *
     */
     
-    
-    func audioPlayerDidFinishPlaying(player: AVAudioPlayer, successfully flag: Bool) {
-        self.delegate?.soundFinished(self)
-        
-        if isFastPressed == true {
-            fastButton.setImage(UIImage(named: "fast"), forState: UIControlState.Normal)
+    func screenOffsets() {
+        if UIScreen.mainScreen().bounds.size.height < 568.0 {
+            chipmunkTop.constant = -4
+            vaderTop.constant = -4
+        } else if UIScreen.mainScreen().bounds.size.height == 667.0 {
+            chipmunkTop.constant = +80
+            vaderTop.constant = +80
+        } else if UIScreen.mainScreen().bounds.size.height == 736.0 {
+            chipmunkTop.constant = +110
+            vaderTop.constant = +110
+        } else {
             
-            audioPlayer.stop()
-            isFastPressed = false
-        }
-        
-        if isSlowPressed == true {
-            slowButton.setImage(UIImage(named: "slow"), forState: UIControlState.Normal)
-            
-            audioPlayer.stop()
-            isSlowPressed = false
-        }
-        
-        if isEchoPressed == true {
-            echoButton.setImage(UIImage(named: "echo"), forState: UIControlState.Normal)
-            
-            audioPlayer.stop()
-            isEchoPressed = false
         }
     }
     
-    func stop () {
-        audioPlayer.stop()
-    }
-    
-    deinit {
-        audioPlayer.delegate = nil
-    }
 }

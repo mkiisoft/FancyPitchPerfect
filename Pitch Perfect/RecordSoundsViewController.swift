@@ -15,11 +15,13 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
     @IBOutlet weak var recordImage: UIButton!
     @IBOutlet weak var recordTime: UILabel!
     @IBOutlet weak var tapToRecord: UILabel!
+    @IBOutlet weak var pauseImage: UIButton!
     
     var audioRecorder:AVAudioRecorder!
-    var recordedAudio:RecordedAudio!
+    var recordedAudio = RecordedAudio()
     
     var recordState = false
+    var isRecorderPaused = false
     var timerCount = 0.0
     var timer = NSTimer()
     
@@ -56,8 +58,13 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
         background.frame = self.view.bounds
         self.view.layer.insertSublayer(background, atIndex: 0)
         
-        recordingInProgress.alpha = 0
         recordTime.alpha = 0
+        tapToRecord.alpha = 0
+        recordingInProgress.alpha = 0
+        
+        UIView.animateWithDuration(1.0, animations: {
+            self.tapToRecord.alpha = 1
+        })
     }
     
     /*!
@@ -95,6 +102,8 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
             tapToRecord.hidden = false
             recordingInProgress.hidden = true
             recordTime.hidden = true
+            pauseImage.hidden = true
+            
             recordImage.setImage(UIImage(named: "microphone"), forState: UIControlState.Normal)
             
             if recordState == true {
@@ -112,7 +121,18 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
             tapToRecord.hidden = true
             recordingInProgress.hidden = false
             recordTime.hidden = false
+            pauseImage.hidden = false
             recordImage.setImage(UIImage(named: "stop button"), forState: UIControlState.Normal)
+            
+            pauseImage.transform = CGAffineTransformMakeScale(0.1, 0.1)
+            pauseImage.alpha = 0
+            
+            UIView.animateWithDuration(0.6, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 1.0, options: .CurveEaseIn, animations: {
+                
+                self.pauseImage.alpha = 1
+                self.pauseImage.transform = CGAffineTransformMakeScale(1, 1)
+                
+                }, completion: nil)
             
             UIView.animateWithDuration(1.2, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 1.0, options: .CurveEaseIn, animations: {
                
@@ -125,25 +145,17 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
                 self.recordTime.alpha = 1
             })
             
-            UIView.animateWithDuration(0.8, delay: 0.0, options: [.CurveEaseIn, .Repeat, .Autoreverse, .AllowUserInteraction], animations: {
-                    self.recordImage.alpha = 0.2
-                }, completion: nil)
+            recordAnimation()
             
             if recordState == false {
-                timer = NSTimer.scheduledTimerWithTimeInterval(0.1, target: self, selector: Selector("CountTimer"), userInfo: nil, repeats: true)
+                timerStarter()
                 recordState = true
             }
-            
-            let dirPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
-            
-            let recordingName = "fancy_audio.wav"
-            let pathArray = [dirPath, recordingName]
-            let filePath = NSURL.fileURLWithPathComponents(pathArray)
             
             let session = AVAudioSession.sharedInstance()
             try! session.setCategory(AVAudioSessionCategoryPlayAndRecord)
             
-            try! audioRecorder = AVAudioRecorder(URL: filePath!, settings: [:])
+            try! audioRecorder = AVAudioRecorder(URL: recordedAudio.filePathUrl, settings: [:])
             audioRecorder.delegate = self
             audioRecorder.meteringEnabled = true
             audioRecorder.prepareToRecord()
@@ -151,6 +163,42 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
         }
         
     }
+    
+    @IBAction func pauseRecord(sender: UIButton) {
+        if isRecorderPaused == false {
+            
+            pauseImage.setImage(UIImage(named: "play"), forState: UIControlState.Normal)
+            audioRecorder.pause()
+            isRecorderPaused = true
+            recordImage.enabled = false
+            recordImage.layer.removeAllAnimations()
+            
+            timer.invalidate()
+            
+        } else {
+            pauseImage.setImage(UIImage(named: "pause"), forState: UIControlState.Normal)
+            audioRecorder.record()
+            recordImage.enabled = true
+            isRecorderPaused = false
+            
+            timerStarter()
+            recordAnimation()
+        }
+    }
+    
+    func timerStarter() {
+        timer = NSTimer.scheduledTimerWithTimeInterval(0.1, target: self, selector: Selector("CountTimer"), userInfo: nil, repeats: true)
+    }
+    
+    func recordAnimation(){
+        
+        self.recordImage.alpha = 1
+        
+        UIView.animateWithDuration(0.8, delay: 0.0, options: [.CurveEaseIn, .Repeat, .Autoreverse, .AllowUserInteraction], animations: {
+            self.recordImage.alpha = 0.2
+            }, completion: nil)
+    }
+    
     
     /*!
     *
@@ -161,11 +209,7 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
     func audioRecorderDidFinishRecording(recorder: AVAudioRecorder, successfully flag: Bool) {
         
         if flag {
-            recordedAudio = RecordedAudio()
-            recordedAudio.filePathUrl = recorder.url
-            recordedAudio.title = recorder.url.lastPathComponent
-            
-            self.performSegueWithIdentifier("secondScreen", sender: recordedAudio)
+            performSegueWithIdentifier("secondScreen", sender: recordedAudio)
         }
         
     }

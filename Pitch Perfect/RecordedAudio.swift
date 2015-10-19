@@ -9,6 +9,17 @@
 import Foundation
 
 class RecordedAudio: NSObject{
-    var filePathUrl: NSURL!
-    var title: String!
+    
+    var filePathUrl: NSURL
+    var title: String = "fancy_audio.wav"
+    
+    override init() {
+        
+        let dirPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
+        
+        let pathArray = [dirPath, title]
+        let filePath = NSURL.fileURLWithPathComponents(pathArray)
+        
+        filePathUrl = filePath!
+    }
 }
