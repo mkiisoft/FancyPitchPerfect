@@ -169,6 +169,7 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
             
             pauseImage.setImage(UIImage(named: "play"), forState: UIControlState.Normal)
             audioRecorder.pause()
+            recordingInProgress.text = "paused"
             isRecorderPaused = true
             recordImage.enabled = false
             recordImage.layer.removeAllAnimations()
@@ -178,6 +179,7 @@ class RecordSoundsViewController: UIViewController, AVAudioRecorderDelegate {
         } else {
             pauseImage.setImage(UIImage(named: "pause"), forState: UIControlState.Normal)
             audioRecorder.record()
+            recordingInProgress.text = "recording..."
             recordImage.enabled = true
             isRecorderPaused = false
             
