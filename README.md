@@ -1,6 +1,6 @@
 # Fancy Pitch Perfect
 
-[![Swift 2.0](https://img.shields.io/badge/language-swift%202.0-green.svg)](https://github.com/mkiisoft/FancyPitchPerfect)
+[![Swift 2.0](https://img.shields.io/badge/language-swift%202.0-lightgrey.svg)](https://github.com/mkiisoft/FancyPitchPerfect)
 
 This is the first project of the iOS Nanodegree from UDACITY. 100% Develop using Swift 2.0 and latest version of XCode v7.0.1
 
